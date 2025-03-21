@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width,initial-scale=1">
+		<meta name="referrer" content="no-referrer">
+		<link rel="icon" href="/favicon.ico">
+		<title>歌词框</title>
+		<style>
+            /* Transparent background */
+            body {
+                background-color: transparent !important;
+            }
+			#chat {
+				width: 700px; height:300px; overflow: hidden;
+				background-color: rgba(255,255,255, 0.7);
+				padding: 10px; -webkit-border-radius: 15px; border: solid 1px #ffffff;
+            }
+            #content {
+                width: auto; height:auto;
+            }
+			#area{
+			    line-height: 45px;  width: 100%; text-align: center;
+				font-size: 33px; font-weight: bold; word-wrap: break-word; overflow:hidden;
+				letter-spacing:5px; font-family:"微软雅黑";
+			}
+            #history{
+                 color: white;
+            }
+            #current{
+                 color: white; text-shadow: 2px 2px 2px #F00078;
+            }
+            #next{
+                 color: white;
+            }
+        </style>
+		<script type="text/javascript" src="jquery-3.7.1.min.js"></script>
+	</head>
+	<body>
+		<div id="chat">
+            <div id="content">
+                <div id="area" class="area">
+                    <div id="history"></div>
+                    <div id="current"></div>
+                    <div id="next"></div>
+                </div>
+            </div>
+		</div>
+		<div id="tip"></div>
+		<script type="text/javascript">
+            let ws;
+            $('#chat').hide();
+            function connect() {
+                ws = new WebSocket("ws://localhost:18765");
+                ws.onopen = function () {
+                    console.log("Connected!");
+                    $('#chat').hide();
+                };
+                ws.onmessage = function (event) {
+                    // 清空版面
+                    /*txt = $('#history').html();
+                    if(txt!="") {
+                        let regex = new RegExp("<br>", "g");
+                        let line = txt.match(regex).length + 1;
+                        //超过字数清空
+                        if (line + 1 == 7) {
+                            $('#history').text("");
+                            $('#current').text("");
+                        }
+                    }*/
+
+                    console.log("Received message:", event.data);
+                    jsonstr = JSON.parse(event.data);
+                    if (jsonstr["type"] != "歌词")
+                        return;
+                    if (jsonstr["status"] == "start") {
+                        $('#history').text("");
+                        $('#current').text("");
+                        $('#next').text("");
+                        $('#chat').show();
+                    }
+                    else if (jsonstr["status"] == "end"){
+                        $('#history').text("");
+                        $('#current').text("");
+                        $('#next').text("");
+                        $('#chat').hide();
+                    }
+                    temp = $('#current').html()
+                    $('#history').append(temp);
+                    $('#current').html(jsonstr["text"]);
+                    $('#next').html(jsonstr["next"]);
+                    //滚动到底部
+					$("#chat").scrollTop($("#content").height());
+                };
+                ws.onclose = function (event) {
+                    console.log('WebSocket连接已关闭');
+                    setTimeout(reconnect, 5000);
+                };
+            }
+
+            function reconnect() {
+                if (ws !== null && (ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING)) {
+                    console.log("尝试重连WebSocket...");
+                    connect();
+                }
+            }
+
+            // 初始化连接
+            connect();
+
+		</script>
+	</body>
+</html>

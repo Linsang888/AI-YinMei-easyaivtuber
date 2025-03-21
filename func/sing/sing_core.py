@@ -3,6 +3,7 @@ from func.tools.singleton_mode import singleton
 from func.log.default_log import DefaultLog
 from func.gobal.data import SingData
 from func.obs.obs_init import ObsInit
+
 from func.tools.string_util import StringUtil
 
 from func.tts.tts_core import TTsCore
@@ -12,7 +13,9 @@ from func.image.image_core import ImageCore
 from func.obs.obs_websocket import ObsWebSocket,VideoStatus,VideoControl
 from func.vtuber.emote_oper import EmoteOper
 from func.vtuber.action_oper import ActionOper
+from func.vtuber.easyaivtuber import EasyAIVtuber
 from func.tts.player import MpvPlay
+from pydub import AudioSegment
 
 import requests
 import json
@@ -20,6 +23,8 @@ import time
 import os
 import re
 from threading import Thread
+
+import pygame
 
 @singleton
 class SingCore:
@@ -34,9 +39,16 @@ class SingCore:
     emoteOper = EmoteOper()  # 表情
     actionOper = ActionOper()  # 动作
     mpvPlay = MpvPlay()  # 播放器
+    easyAIVtuber = EasyAIVtuber()  # easyAIVtuber
+
+
 
     def __init__(self):
         self.obs = ObsInit().get_ws()
+
+        # self.mixer=pygame.mixer
+        # self.mixer.init()
+
 
     # 唱歌
     def singTry(self,songname, username):
@@ -118,6 +130,17 @@ class SingCore:
             return
         self.obs.show_text("状态提示", f"{self.llmData.Ai_Name}已经学会歌曲《{songname}》")
         # =============== 结束：如果不存在歌曲，生成歌曲 =================
+
+        #判断本地是否有完整歌曲
+        if os.path.exists(f"{song_path}/song.wav"):
+            pass
+        else:
+            #合成完整歌曲
+            accompany = AudioSegment.from_file(song_path+"accompany.wav")
+            vocal = AudioSegment.from_file(song_path+"vocal.wav")
+            song = vocal.overlay(accompany)
+            song.export(song_path+"song.wav", format="wav")
+            self.log.info(f"歌曲合成完成，路径{song}")
 
         # 等待播放
         self.log.info(f"等待播放{username}点播的歌曲《{songname}》：{self.singData.is_singing}")
@@ -226,44 +249,60 @@ class SingCore:
             if is_created == 1:
                 self.log.info(f"准备唱歌《{songname}》,播放路径:{song_path}")
                 # =============== 开始-触发搜图 =================
-                img_search_json = {"prompt": query, "username": username}
-                searchimg_output_thread = Thread(target=self.imageCore.searchimg_output, args=(img_search_json,))
-                searchimg_output_thread.start()
+                # img_search_json = {"prompt": query, "username": username}
+                # searchimg_output_thread = Thread(target=self.imageCore.searchimg_output, args=(img_search_json,))
+                # searchimg_output_thread.start()
                 # =============== 结束-触发搜图 =================
                 # 开始唱歌服装穿戴
-                self.emoteOper.emote_ws(1, 0.2, "唱歌")
+                # self.emoteOper.emote_ws(1, 0.2, "唱歌")
                 # 播报唱歌文字
                 self.ttsCore.tts_say(f"回复{username}：我准备唱一首歌《{songname}》")
                 # 循环摇摆动作
-                auto_swing_thread = Thread(target=self.actionOper.auto_swing)
-                auto_swing_thread.start()
+                # auto_swing_thread = Thread(target=self.actionOper.auto_swing)
+                # auto_swing_thread.start()
                 # 唱歌视频播放
                 # sing_dance_thread = Thread(target=sing_dance, args=(query,))
                 # sing_dance_thread.start()
                 # ============== 播放音乐 ================
+                self.log.info(f"音乐路径{song_path}")
                 # 伴奏播放
                 # abspath = os.path.abspath(song_path + "accompany.wav")
-                accompany_thread = Thread(target=self.sing_play,args=("accompany.exe", song_path + "accompany.wav", 70, "0"))
                 # accompany_thread = Thread(target=self.obs.play_video, args=("伴奏", abspath))
 
+                # accompany_thread = Thread(target=self.sing_play,args=("accompany.exe", song_path + "accompany.wav", 70, "0"))
+
                 # 调用音乐播放器[人声播放]
-                mpv_play_thread = Thread(
-                    target=self.sing_play,
-                    args=("song.exe", song_path + "vocal.wav", 70, "0"),
-                )
-                accompany_thread.start()
-                mpv_play_thread.start()
+                # mpv_play_thread = Thread(
+                #     target=self.sing_play,
+                #     args=("song.exe", song_path + "vocal.wav", 70, "0"),
+                # )
+
+                # accompany_thread.start()
+                # mpv_play_thread.start()
+
+
+                self.singData.SongNowPath=song_path
+                # 调用easyAIVtuber演唱
+                sing_thread =Thread(target=self.easyAIVtuber_sing,
+                                    args=(song_path + "song.wav", song_path + "vocal.wav", 2, 1),
+                                    )
+                sing_thread.start()
+
+
                 # ================ end ==================
                 # 循环等待唱歌结束标志
                 time.sleep(3)
                 while self.singData.sing_play_flag == 1:
                     time.sleep(1)
+                # while self.mixer.music.get_busy():
+                #     self.log.info(f"-----音乐播放中-----")
+                #     time.sleep(1)
                 # 伴奏停止
-                self.obs.control_video("伴奏", VideoControl.STOP.value)
+                # self.obs.control_video("伴奏", VideoControl.STOP.value)
                 # 停止唱歌视频播放
                 # self.obs.control_video("唱歌视频",VideoControl.STOP.value)
                 # 结束唱歌穿戴
-                self.emoteOper.emote_ws(1, 0.2, "唱歌")
+                # self.emoteOper.emote_ws(1, 0.2, "唱歌")
                 return 1
             else:
                 tip = f"已经跳过歌曲《{songname}》，请稍后再点播"
@@ -279,6 +318,13 @@ class SingCore:
     def sing_play(self, mpv_name, song_path, volume, start):
         self.singData.sing_play_flag = 1
         self.mpvPlay.mpv_play(mpv_name, song_path, volume, start)
+        self.singData.sing_play_flag = 0
+
+    def easyAIVtuber_sing(self, sing_file, sing_voice_file, sing_beat, sing_mouth):
+        self.singData.sing_play_flag = 1
+        dura = self.mpvPlay.get_framerate_wave(sing_file)
+        self.easyAIVtuber.sing(sing_file, sing_voice_file, sing_beat, sing_mouth)
+        time.sleep(dura)
         self.singData.sing_play_flag = 0
 
     # 唱歌线程

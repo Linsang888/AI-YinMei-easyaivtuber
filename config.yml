@@ -1,4 +1,4 @@
-AiName: "小忽悠" #ai名称
+AiName: "星音未来" #ai名称
 app: #吟美核心的api配置
   port: 1800  #吟美核心的端口
   mode: ["api"]  # b站直播间:"blivedm"|api web:"api"
@@ -6,7 +6,7 @@ searchImg: #搜图服务
   imageNum: 10  # 抽图数量，从中随机一张
   width: 980 # 图片宽度
   height: 500 # 图片高度
-  physical_save_folder: "J:\\ai\\ai-yinmei\\porn\\" #绘画保存图片物理路径
+  physical_save_folder: "D:\\AI-YinMei-v2.0.0\\AI-YinMei-v1.8.1\\porn" #绘画保存图片物理路径
   HttpProxies:
 searchWeb: #搜索服务
   searchNum: 5  # 抽文总数做一个综合理解
@@ -47,9 +47,9 @@ draw: #绘画
   drawUrl: "http://192.168.2.57:7860" #Stable Diffusion服务ip
   width: 980 # 图片宽度
   height: 500 # 图片高度
-  physical_save_folder: "J:\\ai\\ai-yinmei\\porn\\" #绘画保存图片物理路径
+  physical_save_folder: "D:\\AI-YinMei-v2.0.0\\AI-YinMei-v1.8.1\\porn" #绘画保存图片物理路径
 sing: #唱歌
-  singUrl: "http://192.168.2.58:1717" #Auto-Convert-Music服务ip
+  singUrl: "http://127.0.0.1:17171" #Auto-Convert-Music服务ip
   song_not_convert: "(三国演义\\d+|粤剧|京剧|易经)" #不需要学习的歌曲【支持正则】
   create_song_timout: 500 #超时生成歌曲
 emote: #vts表情
@@ -58,6 +58,9 @@ emote: #vts表情
   vtuber_pluginName: "winlonebot"
   vtuber_pluginDeveloper: "winlone"
   vtuber_authenticationToken: "27605d6e478a0ff6bd39c3a7496efa7b1d1269ab2735901c21e201db158ab16c"
+  easyAIVtuberUrl: "http://127.0.0.1:7888" #EasyAIVtuber服务ip
+  img_folder: "D:\\EasyAIVtuber-1.1.0\\data\\images\\" #EasyAIVtuber图片物理路径
+  song_folder: "D:\\AI-YinMei-v2.0.0\\AI-YinMei-v1.8.1\\" #EasyAIVtuber歌曲物理路径
 nsfw: #鉴黄
   nsfw_server: "http://192.168.2.57:1801"
   filterEn: "huge breasts,open clothes,topless,voluptuous,breast,prostitution,erotic,armpit,milk,leaking,spraying,woman,cupless latex,latex,tits,boobs,lingerie,chest,seductive,poses,pose,leg,posture,alluring,milf,on bed,mature,slime,open leg,full body,bra,lace,bikini,full nude,nude,bare,one-piece,navel,cleavage,swimsuit,naked,adult,nudity,beautiful breasts,nipples,sex,Sexual,vaginal,penis,large penis,pantie,leotards,anal"
@@ -66,7 +69,7 @@ nsfw: #鉴黄
   nsfw_limit: 0.2 #nsfw黄图值大于多少进行绘画屏蔽【值越大越是黄图，值范围0~1】
   nsfw_progress_limit: 0.2 #nsfw黄图-绘画进度鉴黄【值越大越是黄图，值范围0~1】
 speech: #语音
-  select: "edge-tts"  #edge-tts、gpt-sovits、bert-vists
+  select: "gpt-sovits"  #edge-tts、gpt-sovits、bert-vists
   bert-vists:
     bert_vists_url: "http://192.168.2.57:5000"
     speaker_name: "珊瑚宫心海[中]"
@@ -75,23 +78,25 @@ speech: #语音
     noisew: 0.9 #控制音节发音变化程度，默认0.9
     speed: 1 #语速
   gpt-sovits:
-    gtp_vists_url: "http://192.168.2.57:9880" #gtp-vists服务ip
+    gtp_vists_url: "http://127.0.0.1:9880" #gtp-vists服务ip
   edge-tts:
     speaker_name: "zh-CN-XiaoxiaoNeural"
-  speech_max_threads: 5 #语音合成线程池
+  speech_max_threads: 3 #语音合成线程池
 obs: #OBS直播软件
-  switch: False  #OBS开关：True-开，False-关
-  url: "192.168.2.198" #OBS直播软件的websocket ip
-  port: 4455
+  switch: True  #OBS开关：True-开，False-关
+  url: "127.0.0.1" #OBS直播软件的websocket ip
+  port: 44551
   password: "123456"
-  dance_path: "H:\\人工智能\\ai\\跳舞视频\\横屏" #跳舞视频所在路径，支持子文件夹
-  emote_path: "H:\\人工智能\\ai\\跳舞视频\\表情" #表情视频所在路径，支持子文件夹
+  dance_path: "D:\\AI\\直播素材\\跳舞视频" #跳舞视频所在路径，支持子文件夹
+  emote_path: "D:\\AI\\直播素材\\表情视频" #表情视频所在路径，支持子文件夹
   emote_font: "H:\\人工智能\\ai\\跳舞视频\\表情\\表情符号" #表情视频的名称列表
   song_background:
     {
-      "海岸花坊": "J:\\ai\\背景音乐\\海岸花坊.rm",
+      "海岸花坊": "D:\\AI\\直播素材\\odum9-24r2o.rm",
       "神社": "J:\\ai\\背景音乐\\神社.mp3",
       "清晨房间": "J:\\ai\\背景音乐\\清晨房间.mp3",
       "粉色房间": "J:\\ai\\背景音乐\\粉色房间.rm",
       "花房": "J:\\ai\\背景音乐\\花房.mp3",
     }
+dance:
+    switch: False #跳舞开关：True-开，False-关

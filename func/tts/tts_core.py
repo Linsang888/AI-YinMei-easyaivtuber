@@ -3,6 +3,7 @@ import uuid
 import logging
 import traceback
 import re
+import time
 import subprocess
 from threading import Thread
 from concurrent.futures import ThreadPoolExecutor
@@ -21,6 +22,8 @@ from func.tools.singleton_mode import singleton
 from func.gobal.data import TTsData
 from func.gobal.data import LLmData
 from func.gobal.data import SingData
+from func.vtuber.easyaivtuber import EasyAIVtuber
+
 
 @singleton
 class TTsCore:
@@ -30,6 +33,7 @@ class TTsCore:
     mpvPlay = MpvPlay()  # 播放器
     emoteOper = EmoteOper()  # 表情
     actionOper = ActionOper()  # 动作
+    easyaivtuber = EasyAIVtuber()  # 动作
     duckduckgoTranslate = DuckduckgoTranslate()  # 翻译
 
     ttsData = TTsData()  # tts数据
@@ -55,6 +59,7 @@ class TTsCore:
         try:
             traceid = str(uuid.uuid4())
             json =  {"voiceType":"other","traceid":traceid,"chatStatus":"end","question":"","text":text,"lanuage":""}
+            # self.log.info(f"跳过语音播放：{text}")
             self.tts_say_do(json)
         except Exception as e:
             self.log.exception("【tts_say】发生了异常：")
@@ -93,32 +98,32 @@ class TTsCore:
             return
 
         # 识别表情
-        jsonstr = self.emoteOper.emote_content(text)
-        self.log.info(f"[{traceid}]输出表情{jsonstr}")
+        # jsonstr = self.emoteOper.emote_content(text)
+        # self.log.info(f"[{traceid}]输出表情{jsonstr}")
         emotion = "happy"
-        if len(jsonstr) > 0:
-            emotion = jsonstr[0]["content"]
+        # if len(jsonstr) > 0:
+        #     emotion = jsonstr[0]["content"]
 
         # 感情值增加
-        moodNum = self.emoteOper.mood(emotion)
+        # moodNum = self.emoteOper.mood(emotion)
 
         # 触发翻译日语
-        if lanuage == "AutoChange":
-            self.log.info(f"[{traceid}]当前感情值:{moodNum}")
-            if re.search(".*日(文|语).*", question) or re.search(".*日(文|语).*说.*", text):
-                trans_json = self.duckduckgoTranslate.translate(text, "zh-Hans", "ja")
-                if StringUtil.has_field(trans_json, "translated"):
-                    text = trans_json["translated"]
-            elif re.search(".*英(文|语).*", question) or re.search(
-                    ".*英(文|语).*说.*", text
-            ):
-                trans_json = self.duckduckgoTranslate.translate(text, "zh-Hans", "en")
-                if StringUtil.has_field(trans_json, "translated"):
-                    text = trans_json["translated"]
-            elif moodNum > 270 or emotion == "angry":
-                trans_json = self.duckduckgoTranslate.translate(text, "zh-Hans", "ja")
-                if StringUtil.has_field(trans_json, "translated"):
-                    text = trans_json["translated"]
+        # if lanuage == "AutoChange":
+        #     self.log.info(f"[{traceid}]当前感情值:{moodNum}")
+        #     if re.search(".*日(文|语).*", question) or re.search(".*日(文|语).*说.*", text):
+        #         trans_json = self.duckduckgoTranslate.translate(text, "zh-Hans", "ja")
+        #         if StringUtil.has_field(trans_json, "translated"):
+        #             text = trans_json["translated"]
+        #     elif re.search(".*英(文|语).*", question) or re.search(
+        #             ".*英(文|语).*说.*", text
+        #     ):
+        #         trans_json = self.duckduckgoTranslate.translate(text, "zh-Hans", "en")
+        #         if StringUtil.has_field(trans_json, "translated"):
+        #             text = trans_json["translated"]
+        #     elif moodNum > 270 or emotion == "angry":
+        #         trans_json = self.duckduckgoTranslate.translate(text, "zh-Hans", "ja")
+        #         if StringUtil.has_field(trans_json, "translated"):
+        #             text = trans_json["translated"]
 
         # 合成语音
         pattern = "(《|》|（|）)"  # 过滤特殊字符，这些字符会影响语音合成
@@ -140,9 +145,9 @@ class TTsCore:
         if chatStatus == "start":
             self.llmData.is_stream_out = True
 
-        # 输出表情
-        emote_thread = Thread(target=self.emoteOper.emote_show, args=(jsonstr,))
-        emote_thread.start()
+        # # 输出表情
+        # emote_thread = Thread(target=self.emoteOper.emote_show, args=(jsonstr,))
+        # emote_thread.start()
 
         # 输出回复字幕
         replyText_json = {"traceid": traceid, "chatStatus": chatStatus, "text": replyText}
@@ -150,11 +155,12 @@ class TTsCore:
         self.ttsData.ReplyTextList.put(replyText_json)
 
         # 循环摇摆动作
-        yaotou_thread = Thread(target=self.actionOper.auto_swing)
-        yaotou_thread.start()
+        # yaotou_thread = Thread(target=self.actionOper.auto_swing)
+        # yaotou_thread.start()
 
         # 播放声音
-        self.mpvPlay.mpv_play("mpv.exe", f".\output\{filename}.mp3", 100, "0")
+        # self.mpvPlay.mpv_play("mpv.exe", f".\output\{filename}.mp3", 100, "0")
+        self.easyaivtuber.speak(f".\output\{filename}.wav")
 
         if chatStatus == "end":
             self.llmData.is_stream_out = False
@@ -163,7 +169,8 @@ class TTsCore:
         # ========================= end =============================
 
         # 删除语音文件
-        subprocess.run(f"del /f .\output\{filename}.mp3 1>nul", shell=True)
+        # subprocess.run(f"del /f .\output\{filename}.mp3 1>nul", shell=True)
+        subprocess.run(f"del /f .\output\{filename}.wav 1>nul", shell=True)
 
     # 语音合成线程池
     tts_chat_say_pool = ThreadPoolExecutor(

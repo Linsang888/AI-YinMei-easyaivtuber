@@ -117,7 +117,7 @@ class ActionOper:
         # 白天
         if "06:00:00" <= now_time <= "16:59:59":
             self.log.info("现在是白天")
-            self.obs.show_image("海岸花坊背景", "J:\\ai\\vup背景\\海岸花坊\\白昼.jpg")
+            self.obs.show_image("海岸花坊背景", "D:\\AI\\直播素材\\village.png")
             self.obs.show_image("粉色房间背景", "J:\\ai\\vup背景\\粉色房间\\白天.jpg")
             self.obs.show_image("粉色房间桌面", "J:\\ai\\vup背景\\粉色房间\\白天桌子.png")
             self.obs.play_video("神社背景", "J:\\ai\\vup背景\\神社白天\\日动态.mp4")
@@ -125,13 +125,13 @@ class ActionOper:
         # 黄昏
         if "17:00:00" <= now_time <= "17:59:59":
             self.log.info("现在是黄昏")
-            self.obs.show_image("粉色房间背景", "J:\\ai\\vup背景\\粉色房间\\黄昏.jpg")
+            self.obs.show_image("粉色房间背景", "D:\\AI\\直播素材\\image.png")
             self.obs.show_image("粉色房间桌面", "J:\\ai\\vup背景\\粉色房间\\黄昏桌子.png")
 
         # 晚上
         if "18:00:00" <= now_time <= "24:00:00" or "00:00:00" < now_time < "06:00:00":
             self.log.info("现在是晚上")
-            self.obs.show_image("海岸花坊背景", "J:\\ai\\vup背景\\海岸花坊\\夜晚.jpg")
+            self.obs.show_image("海岸花坊背景", "D:\\AI\\直播素材\\image.png")
             self.obs.show_image("粉色房间背景", "J:\\ai\\vup背景\\粉色房间\\晚上开灯.jpg")
             self.obs.show_image("粉色房间桌面", "J:\\ai\\vup背景\\粉色房间\\晚上开灯桌子.png")
             self.obs.play_video("神社背景", "J:\\ai\\vup背景\\神社夜晚\\夜动态.mp4")

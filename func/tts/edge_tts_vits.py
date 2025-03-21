@@ -1,5 +1,6 @@
 from func.tools.singleton_mode import singleton
 from func.config.default_config import defaultConfig
+from func.log.default_log import DefaultLog
 import subprocess
 import edge_tts
 import asyncio
@@ -10,6 +11,8 @@ class EdgeTTs:
     # 加载配置
     config = defaultConfig().get_config()
     speaker_name = config["speech"]["edge-tts"]["speaker_name"]
+    # 设置控制台日志
+    log = DefaultLog().getLogger()
 
     def __init__(self):
         pass

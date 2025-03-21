@@ -1,10 +1,12 @@
 # 吟美Api web
 import time
 import uuid
+import json
+import os
 import asyncio, aiohttp
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from threading import Thread
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 from flask_apscheduler import APScheduler
 
 from func.obs.obs_websocket import VideoControl
@@ -22,9 +24,13 @@ from func.dance.dance_core import DanceCore
 from func.cmd.cmd_core import CmdCore
 from func.entrance.entrance_core import EntranceCore
 
+from func.sing.lrc_init import LrcInit
+from func.sing.websocket import WebSocketServer
+
 from func.danmaku.blivedm.blivedm_core import BlivedmCore
 from func.gobal.data import VtuberData
 from func.gobal.data import CommonData
+from func.gobal.data import SingData
 from func.gobal.data import BiliDanmakuData
 
 
@@ -90,6 +96,18 @@ sched1 = APScheduler()
 sched1.init_app(app)
 # ============================================
 
+# ============= Websocket =====================
+# app2 = Flask(__name__)
+# socketio = SocketIO(app2)
+# lrc=LrcInit().get_ws()
+# ============================================
+
+# # ============= webui web =====================
+# app2 = Flask(__name__, template_folder="./manage")
+# sched2 = APScheduler()
+# sched2.init_app(app2)
+# # ============================================
+
 # ============= OBS直播软件控制 ================
 # obs直播软件连接
 obs = ObsInit().get_ws()
@@ -133,6 +151,11 @@ log.info("--------------------")
 log.info("AI虚拟主播-启动成功！")
 log.info("--------------------")
 log.info("======================================")
+
+# webui
+# @app2.route("/", methods=["GET"])
+# def index():
+#     return render_template('index.html')
 
 # 执行指令
 @app.route("/cmd", methods=["GET"])
@@ -290,9 +313,20 @@ def main():
         sched1.add_job(func=llmCore.check_welcome_room, trigger="interval", seconds=20, id="welcome_room", max_instances=50)
         sched1.start()
 
+
         # 开启web
         app_thread = Thread(target=apprun)
         app_thread.start()
+
+        # 启动websocket server
+        # websocket_thread = Thread(target=wsrun())
+        # websocket_thread.start()
+        asyncio.run(start_websocket())
+
+
+        # 开启webui
+        # app2_thread = Thread(target=apprun2)
+        # app2_thread.start()
 
     # 可以监听多个弹幕平台
     if "blivedm" in mode:
@@ -309,6 +343,91 @@ def apprun():
     app.logger.disabled = True
     # 启动web应用
     app.run(host="0.0.0.0", port=commonData.port)
+
+async def start_websocket():
+    websocket_server = WebSocketServer()
+    # 启动 WebSocket 服务器
+    websocket_task = asyncio.create_task(websocket_server.start())
+    singData = SingData()  # 唱歌数据
+    lrc=LrcInit()
+    # 定时向 WebSocket 客户端发送数据
+    async def send_data_periodically():
+        # 首次发送消息，与客户端建立链接
+        data = {
+            "type": "歌词",
+            "status": "",
+            "text": "",
+            "next": "",
+        }
+        await asyncio.sleep(2)
+        await websocket_server.send(json.dumps(data))
+        while True:
+            if singData.sing_play_flag == 1:
+                lrc_path=vtuberData.song_folder+singData.SongNowPath+"song.lrc"
+                log.info(f"lrc文件路径:{lrc_path}")
+                if os.path.exists(f"{lrc_path}"):
+                    dictmusic=lrc.get_music_dict(lrc_path)
+                    data = {
+                        "type": "歌词",
+                        "status": "start",
+                        "text": "",
+                        "next": "",
+                    }
+                    await asyncio.sleep(2)
+                    await websocket_server.send(json.dumps(data))
+
+                    listmuscitime = []  # 创建空列表,把字典的key写进去
+                    for keys in dictmusic.keys():
+                        listmuscitime.append(keys)
+                    listmuscitime.sort()  # 默认对列表进行升序
+                    time.sleep(listmuscitime[0])
+                    for index in range(len(listmuscitime)):
+                        if index > 0:
+                            time1=(listmuscitime[index]-listmuscitime[index-1])
+                            text=dictmusic.get(listmuscitime[index])+"\n"  # 对列表里面的key值下标遍历,进而用get取字典的value
+                            if index+1<len(listmuscitime):
+                                next=dictmusic.get(listmuscitime[index+1])+"\n"
+                            else:
+                                next=""
+
+                            if index==1:
+                                status="start"
+                            else:
+                                status=""
+
+                            data = {
+                                "type": "歌词",
+                                "status": status,
+                                "text": text,
+                                "next": next
+                            }
+                            # 判断是否切歌
+                            if singData.sing_play_flag == 1:
+                                await asyncio.sleep(time1)  # 两段歌词之间的时间
+                                await websocket_server.send(json.dumps(data))
+                            else:
+                                data = {
+                                    "type": "歌词",
+                                    "status": "end",
+                                    "text": text,
+                                    "next": next
+                                }
+                                await websocket_server.send(json.dumps(data))
+                    while singData.sing_play_flag == 1:
+                        time.sleep(1)
+                    data = {
+                        "type": "歌词",
+                        "status": "end",
+                        "text": text,
+                        "next": next
+                    }
+                    await websocket_server.send(json.dumps(data))
+            else:
+                time.sleep(1)
+
+    periodic_task = asyncio.create_task(send_data_periodically())
+    # 并发运行所有任务
+    await asyncio.gather(websocket_task, periodic_task)
 
 if __name__ == "__main__":
     main()

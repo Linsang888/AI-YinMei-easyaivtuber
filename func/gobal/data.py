@@ -68,6 +68,13 @@ class VtuberData:
     auto_swing_lock = threading.Lock()
     # ========================================
 
+    # ============= EasyAIVtuber =====================
+    easyAIVtuberUrl = config["emote"]["easyAIVtuberUrl"]
+    img_folder = config["emote"]["img_folder"]
+    song_folder = config["emote"]["song_folder"]
+    # ========================================
+
+
     mood_num = 0  # 感情值
 
 @singleton
@@ -80,6 +87,7 @@ class SingData:
     SongQueueList = queue.Queue()  # 唱歌队列
     SongMenuList = queue.Queue()  # 唱歌显示
     SongNowName = {}  # 当前歌曲
+    SongNowPath = ""  # 当前歌曲路径
     is_singing = 2  # 1.唱歌中 2.唱歌完成
     is_creating_song = 2  # 1.生成中 2.生成完毕
     sing_play_flag = 0  # 1.正在播放唱歌 0.未播放唱歌 【用于监听歌曲播放器是否停止】
@@ -147,6 +155,7 @@ class DanceData:
     emote_now_path = ""
     dance_now_path = ""
     singdance_now_path = ""
+    switch=config["dance"]["switch"]
 
 @singleton
 class BiliDanmakuData:
@@ -169,4 +178,5 @@ class BiliDanmakuData:
 class CommonData:
     mode = config["app"]["mode"] # b站直播间:"blivedm"|api web:"api"
     port = config["app"]["port"]
+    # webport = config["app"]["webport"]
     Ai_Name: str = config["AiName"]  # Ai名称

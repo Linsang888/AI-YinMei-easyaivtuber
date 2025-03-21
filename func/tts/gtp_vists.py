@@ -14,7 +14,8 @@ class GtpVists:
         pass
 
     def get_vists(self, filename, text, emotion):
-        save_path = f"./output/{filename}.mp3"
+        # save_path = f"./output/{filename}.mp3"
+        save_path = f"./output/{filename}.wav"
         text = parse.quote(text)
         response = requests.get(url=f"{self.gtp_vists_url}/?text={text}&text_language=auto", timeout=(5, 60))
         if response.status_code == 200:

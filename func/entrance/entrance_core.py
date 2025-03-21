@@ -9,10 +9,13 @@ from func.search.search_core import SearchCore
 from func.dance.dance_core import DanceCore
 from func.cmd.cmd_core import CmdCore
 from func.vtuber.action_oper import ActionOper
+from func.vtuber.easyaivtuber import EasyAIVtuber
 
 from func.obs.obs_init import ObsInit
 from func.tools.string_util import StringUtil
 from func.tools.singleton_mode import singleton
+
+
 
 @singleton
 class EntranceCore:
@@ -51,6 +54,8 @@ class EntranceCore:
 
     actionOper = ActionOper()  # 动作核心
 
+    easyAIVtuber = EasyAIVtuber()  # EasyAIVtuber核心
+
     def __init__(self):
         self.obs = ObsInit().get_ws()
 
@@ -62,6 +67,13 @@ class EntranceCore:
         # 过滤特殊字符
         query = self.nsfwCore.str_filter(query)
         self.log.info(f"[{traceid}]弹幕捕获：[{user_name}]:{query}")  # 打印弹幕信息
+
+        text = ["唱歌", "切歌","变身"]
+        is_contain = StringUtil.has_string_reg_list(f"^{text}", query)
+        if is_contain is None:
+            self.log.info(f"无效命令")
+            return
+
 
         # 命令执行
         if self.cmdCore.cmd(traceid, query, uid, user_name):
@@ -99,6 +111,10 @@ class EntranceCore:
 
         # 换装
         if self.actionOper.msg_deal_clothes(traceid, query, uid, user_name):
+            return
+
+        # easyAIVtuber换皮
+        if self.easyAIVtuber.msg_deal_clothes(traceid, query, uid, user_name):
             return
 
         # 切换场景

@@ -1,6 +1,8 @@
 import os
 from func.log.default_log import DefaultLog
 from func.vtuber.emote_oper import EmoteOper
+from func.vtuber.easyaivtuber import EasyAIVtuber
+
 from func.tools.string_util import StringUtil
 from func.tools.singleton_mode import singleton
 from func.gobal.data import LLmData
@@ -26,6 +28,8 @@ class CmdCore:
 
     # 表情
     emoteOper = EmoteOper()
+    # easyAIVtuber
+    easyAIVtuber = EasyAIVtuber()
 
     def __init__(self):
         pass
@@ -46,19 +50,22 @@ class CmdCore:
             os.system("taskkill /T /F /IM mpv.exe")
             self.log.info(f"[{traceid}][{user_name}]执行命令：{query}")
             return True
-        if query == "\\dance":
-            os.system("taskkill /T /F /IM song.exe")
-            os.system("taskkill /T /F /IM accompany.exe")
-            os.system("taskkill /T /F /IM mpv.exe")
-            self.log.info(f"[{traceid}][{user_name}]执行命令：{query}")
-            return True
+        if self.danceData.switch == True:
+            if query == "\\dance":
+                os.system("taskkill /T /F /IM song.exe")
+                os.system("taskkill /T /F /IM accompany.exe")
+                os.system("taskkill /T /F /IM mpv.exe")
+                self.log.info(f"[{traceid}][{user_name}]执行命令：{query}")
+                return True
         # 下一首歌
         text = ["\\next", "下一首", "下首", "切歌", "next"]
         is_contain = StringUtil.has_string_reg_list(f"^{text}", query)
         if is_contain is not None:
-            os.system("taskkill /T /F /IM song.exe")
-            os.system("taskkill /T /F /IM accompany.exe")
+            # os.system("taskkill /T /F /IM song.exe")
+            # os.system("taskkill /T /F /IM accompany.exe")
+            self.easyAIVtuber.stop()
             self.singData.is_singing = 2  # 1.唱歌中 2.唱歌完成
+            self.singData.sing_play_flag = 0  # 1.正在播放唱歌 0.未播放唱歌 【用于监听歌曲播放器是否停止】
             self.log.info(f"[{traceid}][{user_name}]执行命令：{query}")
             return True
         # 停止学歌
@@ -69,10 +76,11 @@ class CmdCore:
             self.log.info(f"[{traceid}][{user_name}]执行命令：{query}")
             return True
         # 停止跳舞
-        text = ["\\停止跳舞", "停止跳舞", "不要跳舞", "stop dance"]
-        is_contain = StringUtil.has_string_reg_list(f"^{text}", query)
-        if is_contain is not None:
-            self.danceData.is_dance = 2  # 1.正在跳舞 2.跳舞完成
-            self.log.info(f"[{traceid}][{user_name}]执行命令：{query}")
-            return True
-        return False
+        if self.danceData.switch == True:
+            text = ["\\停止跳舞", "停止跳舞", "不要跳舞", "stop dance"]
+            is_contain = StringUtil.has_string_reg_list(f"^{text}", query)
+            if is_contain is not None:
+                self.danceData.is_dance = 2  # 1.正在跳舞 2.跳舞完成
+                self.log.info(f"[{traceid}][{user_name}]执行命令：{query}")
+                return True
+            return False
